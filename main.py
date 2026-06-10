@@ -7,10 +7,13 @@ FILE_PATH = "members.pickle"
 
 
 # FN-001 데이터 로드
-def load_data(path) -> dict:
+def load_data(path):
     # 프로그램 시작 시 1회 실행
     # path에 해당하는 바이너리 파일을 pickle.load로 읽음
+    
+    
     # 파일이 없거나 손상되면 빈 딕셔너리 반환
+    
 
     #pickle 파일 여기서 오픈하게 만듬
     try:
@@ -19,13 +22,13 @@ def load_data(path) -> dict:
             return members
 
     except FileNotFoundError:
-        return {}
+        return []
 
     except EOFError:
-        return {}
+        return []
 
     except pickle.UnpicklingError:
-        return {}
+        return []
 
 
 # FN-002 메뉴 출력
@@ -59,62 +62,45 @@ def print_menu():
 # FN-003 회원 추가
 #dictionary set
 def add_member(members):
-    print("이름을 입력하세요")
+    print("회원 정보를 입력하세요.")
 
-    #while - true 문을 4번 사용하여 각 유효성 검사
-    #while문 안에 if문
     while True:
         name = input("이름: ")
-        
-        #이름: 1자 이상 5자 이내
-        if len(name) < 1 or len(name) > 5:
-            print("이름은 1자 이상 5자 이하로 입력하세요.")            
-            continue    #틀리면 다시 while문으로 continue
-        break  #맞으면
+
+        if not validate_name(name):
+            continue
+
+        break
 
     while True:
-
-        #구현요구 사항 - 전화번호 두가지  1) ^\d{3}-\d{4}-\d{4}$  (하이픈 포함) 2) ^010\d{8}$ 또는 ^\d{11}$   11자리 숫자
         phoneNum = input("전화번호: ")
 
-        #validatenumber
-        if not re.fullmatch(r"010\d{8}$", phoneNum):
-            print("전화 번호는 010 뒤 8자리 숫자여야합니다.")
+        if not validate_phone(phoneNum):
             continue
+
         break
-        #try except
+
+    address = input("주소: ")
 
     while True:
-        address = input("주소: ")
-    
-        #구분: 검증 없고 빈값만 거름
-        if address == "":
-            print("주소를 입력하세요.")
-            continue
-        break
-    
+        member_type = input("종류: ")
 
-    while True:
-        category = input("구분(가족, 친구, 기타):  ")
-         
-        # if not in 으로 특정 요소의 포함 여부 확인 -> not in [list]
-        #구분: 가족 / 친구 / 기타
-        if category not in ["가족", "친구", "기타"]:
-            print("구분 3가지 중 하나를 골라야 합니다.")
+        if not validate_type(member_type):
             continue
+
         break
 
-    # 4가지 유효성 검사 통과하면 members를 list에다가 추가
-    members.append({
-        "name": name,
-        "phoneNum": phoneNum,
-        "address": address,
-        "category": category
-    })
+    members.append(
+        {
+            "name": name,
+            "phoneNum": phoneNum,
+            "address": address,
+            "category": member_type
+        }
+    )
 
-    print("회원 정보가 등록되었습니다. ")
-    print(members)
-    
+    print("회원 정보가 등록되었습니다.")
+
     
 
 # FN-004 회원 목록 조회
@@ -128,11 +114,12 @@ def list_members(members):
     print(f"총 {len(members)}명의 회원이 저장되었습니다.")
 
     for member in members:
-        print(f"회원정보: 이름 = {member["name"]}, 전화번호: {member["phoneNum"]}, 주소: {member["address"]}, 구분: {member["category"]}")
+        print(f"회원정보: 이름 = {member["name"]}, 전화번호: {member["phoneNum"]}, 주소: {member["address"]}, 구분: {member["type"]}")
 
 
 
 # FN-005 이름으로 회원 검색
+# 여기에다 검색을 맡기는 코드
 def find_by_name(members, name) -> list:
     # 전체 회원을 순회하면서 이름이 일치하는 회원을 리스트로 수집
     # 동명이인 처리를 위해 list로 반환
@@ -162,7 +149,7 @@ def update_member(members):
     #2건 이상이면
     else: 
         for i, member in enumerate(result, start =1)
-            print(f"{i}. member['name'] / {member['phoneNum']} / {member['address']} / {member['category']}")
+            print(f"{i}. member['name'] / {member['phoneNum']} / {member['address']} / {member['type']}")
     
         num = int(input("수정할 번호를 선택하세요: "))
 
@@ -176,13 +163,83 @@ def update_member(members):
 # FN-007 회원 삭제
 def delete_member(members):
     # 삭제할 이름 입력
+    print("삭제할 회원의 이름을 입력하세요.")
+    name = input("이름 : ")
+    
+    
     # find_by_name()으로 검색
+    result = find_by_name(members, name)
+    
     # 0건이면 안내 후 복귀
-        # 1건이면 바로 삭제
+    if len(result) == 0:
+        print("해당하는 회원 정보가 없습니다.")
+    # 1건이면 바로 삭제
+    elif len(result) == 1:
+        target = result[0]
+        members.remove(target)
+        print("삭제가 완료됬습니다. ")
     # 2건 이상이면 번호 선택 후 삭제
+    else:
+        print(f"총 {len(result)}개의 목록이 검색되었습니다.")
+        print("아래 목록 중 삭제할 회원의 번호를 입력하세요.")
+    
+    #for문과 enumerate로 리스트에서 같은 이름들 찾기    
     # 삭제 완료 메시지 출력
+        for i, member in enumerate(result, start = 1):
+            print(
+                f"{i}. 이름 = {member["name"]},"
+                f"전화번호 : {member["phoneNum"]}"
+                f"주소: {member["address"]},"
+                f"구분: {member["type"]}" 
+            )
 
-    pass
+        num = int(input())
+
+        if num < 1 or num > len(result):
+            print("잘못된 번호입니다.")
+            return
+        
+        removedResult = result[num - 1]
+        members.remove(removedResult)
+
+        print("삭제가 완료되었습니다.")
+
+
+
+# FN-009 이름 유효성 검사
+def validate_name(name):
+    # 이름은 1~5자만 허용
+    if len(name) < 1 or len(name) > 5:
+        print("이름은 1자 이상 5자 이하로 입력하세요.")
+        return False
+
+    return True
+
+
+
+# FN-009 전화번호 유효성 검사
+def validate_phone():
+    # 전화번호 형식 검사
+    # 정규식 권장: ^010\d{8}$
+    while True:
+        phoneNum = input("전화번호: ")
+
+    #validatenumber
+        if not re.fullmatch(r"010\d{8}$", phoneNum):
+            print("전화 번호는 010 뒤 8자리 숫자여야합니다.")
+            continue
+        
+        return phoneNum
+
+
+# FN-009 회원 종류 유효성 검사
+def validate_type(member_type):
+    # 가족 / 친구 / 기타 중 하나인지 검사
+     if member_type not in ["가족", "친구", "기타"]:
+        print("회원 종류는 가족, 친구, 기타 중 하나만 입력하세요.")
+        return False
+
+     return True
 
 
 # FN-008 데이터 저장
@@ -193,33 +250,6 @@ def save_data(path, members):
     with open(path, "wb") as file:
         pickle.dump(members, file)
 
-
-# FN-009 이름 유효성 검사
-def validate_name(name):
-    # 이름은 1~5자만 허용
-    # 예: 윤아 가능
-    # 예: 가나다라마바 불가능
-
-    pass
-
-
-# FN-009 전화번호 유효성 검사
-def validate_phone(phone):
-    # 전화번호 형식 검사
-    # 현재 기준: 01012345678 형태
-    # 정규식 권장: ^010\d{8}$
-    #구현요구 사항 - 전화번호 두가지  1) ^\d{3}-\d{4}-\d{4}$  (하이픈 포함) 2) ^010\d{8}$ 또는 ^\d{11}$   11자리 숫자
-
-        pass 
-
-
-# FN-009 회원 종류 유효성 검사
-def validate_type(member_type):
-    # 가족 / 친구 / 기타 중 하나인지 검사
-
-    pass
-
-
 # FN-010 예외 처리
 # 파일 예외는 load_data()에서 처리
 # 메뉴 입력 예외는 main() 루프에서 처리
@@ -229,25 +259,26 @@ def validate_type(member_type):
 
 def main():
     # 프로그램 시작
-    members = []
+    DB_FILE = "members.pickle"
+    member_db = load_data(DB_FILE)
 
     while True:
         choice = print_menu()
 
         if choice == "1":
-            add_member(members)
+            add_member(member_db)
 
         elif choice == "2":
-            list_members(members)
+            list_members(member_db)
 
         elif choice == "3":
-            update_member(members)
+            update_member(member_db)
 
         elif choice == "4":
-            delete_member(members)
+            delete_member(member_db)
 
         elif choice == "5":
-            save_data(FILE_PATH, members)
+            save_data(FILE_PATH, member_db)
             print("종료되었습니다.")
             break
 
